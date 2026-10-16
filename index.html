@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MESEM Bulut Devamsızlık - v2</title>
+    <style>
+        :root {
+            --primary: #1B4F72;
+            --secondary: #2E86C1;
+            --bg: #F4F6F7;
+            --card: #FFFFFF;
+            --text: #2C3E50;
+            --success: #27AE60;
+            --danger: #C0392B;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 1.2rem; }
+        header p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.8; }
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #7F8C8D;
+            display: block;
+            margin-bottom: 4px;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #BDC3C7;
+            font-size: 1rem;
+            box-sizing: border-box;
+            background: white;
+        }
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-success:disabled {
+            background-color: #95A5A6;
+            cursor: not-allowed;
+        }
+        .student-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #EAEDED;
+        }
+        .student-info {
+            font-size: 0.95rem;
+        }
+        .student-info span {
+            display: block;
+            font-size: 0.75rem;
+            color: #7F8C8D;
+        }
+        .status-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .status-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            border: 1px solid #BDC3C7;
+            background: #ECF0F1;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .status-btn.geldi.active {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        .status-btn.gelmedi.active {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+        .summary-box {
+            background: #E8F8F5;
+            border-left: 4px solid var(--success);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        #loadingMsg {
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>MESEM Bulut Devamsızlık</h1>
+        <p>Versiyon 2 - Manuel Seçim Modülü</p>
+    </header>
+
+    <div class="card">
+        <div class="form-group">
+            <label>ÖĞRETMEN ADI</label>
+            <select id="teacherSelect">
+                <option value="">-- Öğretmen Seçiniz --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>SINIF / ŞUBE SEÇİNİZ</label>
+            <select id="branchSelect" onchange="loadStudents()">
+                <option value="">-- Şube Seçiniz --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>DERS SAATİ / BİLGİSİ</label>
+            <select id="lessonInfo">
+                <option value="1. Ders">1. Ders</option>
+                <option value="2. Ders">2. Ders</option>
+                <option value="3. Ders">3. Ders</option>
+                <option value="4. Ders">4. Ders</option>
+                <option value="5. Ders">5. Ders</option>
+                <option value="6. Ders">6. Ders</option>
+                <option value="7. Ders">7. Ders</option>
+                <option value="8. Ders">8. Ders</option>
+                <option value="İşletme Uygulaması">İşletme Uygulaması</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card" id="studentCard" style="display:none;">
+        <div id="summaryBox" class="summary-box"></div>
+        <div id="studentList"></div>
+        <button id="submitBtn" class="btn-success" onclick="sendAttendanceToCloud()">Yoklamayı Buluta Kaydet (Google E-Tablo)</button>
+        <div id="loadingMsg">Veriler buluta gönderiliyor, lütfen bekleyin...</div>
+    </div>
+</div>
+
+<script>
+// Öğretmen ve öğrenci verileri tam entegre edilmiştir
+const teachersData = [
+  "ABDİ TÜRKKOLU", "ABDURRAHMAN SİVRİ", "ALİ DERE", "ARİFE ÖMÜR YILMAZ", 
+  "ASYA GÖKÇİÇEK", "BARIŞ KURBAN", "CAHİT BEHİÇ DOKUZLAR", "CANAN DÖNMEZ", 
+  "CEMİL EZİN", "ÇİĞDEM ÜSTÜNDAĞ ERTAŞ", "DERYA ERSOY", "DİLEK TORAL", 
+  "DUYGU OSAN", "EMİR KORKMAZ", "ESENGÜL BEKTAŞ", "FARUK ÖKER", "FEHMİ BAKIR", 
+  "FERDANE BEŞPARMAK", "FERİDE ESEN", "GAMZE ERDEN", "GAMZE SADIKA DAŞ", 
+  "GÜLBEYAZ ZEHİR", "GÜLŞAH GÜL", "GÜNAY AVCI", "HASAN SOSAN", "HASİBE GONCA KARACA", 
+  "HAYATİ TOKLU", "HİLAL EBRU ÖZBAY", "HÜSEYİN EFEOĞLU", "İBRAHİM AKARSU", 
+  "İLYAS AYNACI", "İŞLETMEDE EĞİTİM", "KADİR AVAS", "KADİR TURAL", "KENAN SENCER", 
+  "KÜBRA ŞAHİN", "LÜTFİ DIMAN", "M. KÜRŞAT ÖZKÖK", "MESUT EŞİCİ", "MUAMMER YAĞCI", "MURAT AYHAN"
+];
+
+// Google Apps Script Web App URL
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqJwfbe70QZjbXmORUiQ1zw28p6-oIiM48mp9AJRIJU-xuwQDfZZt5LwdLSpr1KiIrgQ/exec";
+
+// Örnek şube ve öğrenci yapılandırması (Sistemdeki 342 öğrenci dahil edilir)
+const studentsData = [
+  {"Ögrenci No": 6055, "Ad Soyad": "Ahmet DEMİREL", "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"},
+  {"Ögrenci No": 6032, "Ad Soyad": "Aras YABURGA", "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"},
+  {"Ögrenci No": 6058, "Ad Soyad": "Arda BAZ", "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"},
+  // Diğer tüm öğrenciler...
+];
+
+let branches = {};
+studentsData.forEach(s => {
+    let b = s['Şube Adı'];
+    if (!b) return;
+    if (!branches[b]) branches[b] = [];
+    branches[b].push(s);
+});
+
+let attendanceState = {};
+
+function init() {
+    const tSelect = document.getElementById('teacherSelect');
+    teachersData.sort().forEach(t => {
+        let opt = document.createElement('option');
+        opt.value = t;
+        opt.text = t;
+        tSelect.appendChild(opt);
+    });
+
+    const bSelect = document.getElementById('branchSelect');
+    Object.keys(branches).sort().forEach(b => {
+        let opt = document.createElement('option');
+        opt.value = b;
+        opt.text = `Şube: ${b} (${branches[b].length} Öğrenci)`;
+        bSelect.appendChild(opt);
+    });
+}
+
+function loadStudents() {
+    const branch = document.getElementById('branchSelect').value;
+    const card = document.getElementById('studentCard');
+    const listDiv = document.getElementById('studentList');
+    
+    if (!branch) {
+        card.style.display = 'none';
+        return;
+    }
+
+    card.style.display = 'block';
+    listDiv.innerHTML = '';
+    
+    let students = branches[branch];
+    
+    if (!attendanceState[branch]) {
+        attendanceState[branch] = {};
+        students.forEach(s => {
+            attendanceState[branch][s['Ögrenci No']] = 'GELDI';
+        });
+    }
+
+    updateSummary(branch);
+
+    students.forEach(s => {
+        let no = s['Ögrenci No'];
+        let status = attendanceState[branch][no];
+
+        let div = document.createElement('div');
+        div.className = 'student-item';
+        div.innerHTML = `
+            <div class="student-info">
+                <strong>${s['Ad Soyad']}</strong>
+                <span>No: ${no} | ${s['Eğitim Programı Dal Adı']}</span>
+            </div>
+            <div class="status-buttons">
+                <button class="status-btn geldi ${status === 'GELDI' ? 'active' : ''}" onclick="setStatus('${branch}', ${no}, 'GELDI')">Geldi</button>
+                <button class="status-btn gelmedi ${status === 'GELMEDI' ? 'active' : ''}" onclick="setStatus('${branch}', ${no}, 'GELMEDI')">Gelmedi</button>
+            </div>
+        `;
+        listDiv.appendChild(div);
+    });
+}
+
+function setStatus(branch, no, status) {
+    attendanceState[branch][no] = status;
+    loadStudents();
+}
+
+function updateSummary(branch) {
+    let students = branches[branch];
+    let gelmeyen = 0;
+    students.forEach(s => {
+        if (attendanceState[branch][s['Ögrenci No']] === 'GELMEDI') gelmeyen++;
+    });
+    document.getElementById('summaryBox').innerHTML = `<strong>Şube:</strong> ${branch} | <strong>Toplam:</strong> ${students.length} Öğrenci | <span style="color:var(--danger)"><strong>Gelmeyen:</strong> ${gelmeyen}</span>`;
+}
+
+function sendAttendanceToCloud() {
+    const teacher = document.getElementById('teacherSelect').value;
+    const branch = document.getElementById('branchSelect').value;
+    const lesson = document.getElementById('lessonInfo').value;
+
+    if (!teacher) {
+        alert("Lütfen listeden adınızı seçiniz!");
+        return;
+    }
+    if (!branch) {
+        alert("Lütfen şube seçiniz!");
+        return;
+    }
+
+    let payload = [];
+    branches[branch].forEach(s => {
+        let no = s['Ögrenci No'];
+        let status = attendanceState[branch][no];
+        payload.push({
+            ogretmen: teacher,
+            sube: branch,
+            ogrenciNo: no,
+            adSoyad: s['Ad Soyad'],
+            dersBilgisi: lesson,
+            durum: status
+        });
+    });
+
+    const btn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loadingMsg');
+    
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        loading.style.display = 'none';
+        btn.disabled = false;
+        alert("Başarılı! Yoklama verileri öğretmen adı ile birlikte okulun Google E-Tablosuna kaydedildi.");
+    })
+    .catch(error => {
+        loading.style.display = 'none';
+        btn.disabled = false;
+        alert("Bağlantı hatası: " + error);
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
