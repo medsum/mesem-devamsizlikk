@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MESEM Bulut Devamsızlık Sistemi - v2</title>
+    <style>
+        :root {
+            --primary: #1B4F72;
+            --secondary: #2E86C1;
+            --bg: #F4F6F7;
+            --card: #FFFFFF;
+            --text: #2C3E50;
+            --success: #27AE60;
+            --danger: #C0392B;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 1.2rem; }
+        header p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.85; }
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #566573;
+            display: block;
+            margin-bottom: 4px;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #BDC3C7;
+            font-size: 1rem;
+            box-sizing: border-box;
+            background: white;
+        }
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            padding: 12px;
+            font-size: 1.05rem;
+        }
+        .btn-success:disabled {
+            background-color: #95A5A6;
+            cursor: not-allowed;
+        }
+        .student-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #EAEDED;
+        }
+        .student-info {
+            font-size: 0.95rem;
+            padding-right: 8px;
+        }
+        .student-info span {
+            display: block;
+            font-size: 0.78rem;
+            color: #7F8C8D;
+            margin-top: 2px;
+        }
+        .status-buttons {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .status-btn {
+            padding: 7px 14px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            border: 1px solid #BDC3C7;
+            background: #ECF0F1;
+            cursor: pointer;
+            font-weight: bold;
+            width: auto;
+        }
+        .status-btn.geldi.active {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        .status-btn.gelmedi.active {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+        .summary-box {
+            background: #E8F8F5;
+            border-left: 4px solid var(--success);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        #loadingMsg {
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>MESEM Bulut Devamsızlık</h1>
+        <p>Germencik MESEM - Manuel Yoklama Modülü (v2)</p>
+    </header>
+
+    <div class="card">
+        <div class="form-group">
+            <label>ÖĞRETMEN ADI</label>
+            <select id="teacherSelect">
+                <option value="">-- Öğretmen Seçiniz --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>SINIF / ŞUBE SEÇİNİZ</label>
+            <select id="branchSelect" onchange="loadStudents()">
+                <option value="">-- Şube Seçiniz --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>DERS SAATİ / BİLGİSİ</label>
+            <select id="lessonInfo">
+                <option value="1. Ders (08:30)">1. Ders (08:30)</option>
+                <option value="2. Ders (09:25)">2. Ders (09:25)</option>
+                <option value="3. Ders (10:15)">3. Ders (10:15)</option>
+                <option value="4. Ders (11:05)">4. Ders (11:05)</option>
+                <option value="5. Ders (11:50)">5. Ders (11:50)</option>
+                <option value="6. Ders (13:15)">6. Ders (13:15)</option>
+                <option value="7. Ders (14:05)">7. Ders (14:05)</option>
+                <option value="8. Ders (14:55)">8. Ders (14:55)</option>
+                <option value="9. Ders (15:45)">9. Ders (15:45)</option>
+                <option value="10. Ders (16:35)">10. Ders (16:35)</option>
+                <option value="İşletmede Mesleki Eğitim">İşletmede Mesleki Eğitim</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card" id="studentCard" style="display:none;">
+        <div id="summaryBox" class="summary-box"></div>
+        <div id="studentList"></div>
+        <button id="submitBtn" class="btn-success" onclick="sendAttendanceToCloud()">Yoklamayı Buluta Kaydet (Google E-Tablo)</button>
+        <div id="loadingMsg">Veriler buluta gönderiliyor, lütfen bekleyin...</div>
+    </div>
+</div>
+
+<script>
+const teachersData = ["ABDİ TÜRKKOLU", "ALİ DERE", "BARIŞ KURBAN", "CANAN DÖNMEZ", "CEMİL EZİN", "DERYA ERSOY", "DUYGU OSAN", "EMİR KORKMAZ", "FARUK ÖKER", "HASİBE GONCA KARACA", "HÜSEYİN EFEOĞLU", "İBRAHİM AKARSU", "KADİR AVAS", "KENAN SENCER", "M. KÜRŞAT ÖZKÖK", "MESUT EŞİCİ", "MUAMMER YAĞCI", "MURAT AYHAN"];
+const studentsData = [{"Ögrenci No": 6064, "Ad Soyad": "Abdulhakim KIRCA", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Çelik Konstrüksiyon"}, {"Ögrenci No": 6056, "Ad Soyad": "Abdullah DEMİR", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Çelik Konstrüksiyon"}, {"Ögrenci No": 6055, "Ad Soyad": "Ahmet DEMİREL", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6032, "Ad Soyad": "Aras YABURGA", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6058, "Ad Soyad": "Arda BAZ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6060, "Ad Soyad": "Aybüke GÜNGÖR", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Pasta Ve Tatlı Yapımı"}, {"Ögrenci No": 6043, "Ad Soyad": "Ayşenur DÖNMEZ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Aşçılık"}, {"Ögrenci No": 6048, "Ad Soyad": "Berat TEKİN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Metal Doğrama"}, {"Ögrenci No": 6001, "Ad Soyad": "Burak KÖÇER", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Ahşap Doğrama Teknolojisi"}, {"Ögrenci No": 6067, "Ad Soyad": "Deniz CAN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Oto Döşemeciliği"}, {"Ögrenci No": 6002, "Ad Soyad": "Doğan DINAR", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Görüntü Ve Ses Sistemleri"}, {"Ögrenci No": 6003, "Ad Soyad": "Doğukan Efe DİKENKUŞU", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Metal Doğrama"}, {"Ögrenci No": 6018, "Ad Soyad": "Enes KELEŞ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Pasta Ve Tatlı Yapımı"}, {"Ögrenci No": 6004, "Ad Soyad": "Erşan EKSEN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6014, "Ad Soyad": "Ferit KOYUNOĞLU", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6065, "Ad Soyad": "Mihriban ATAŞ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Aşçılık"}, {"Ögrenci No": 6024, "Ad Soyad": "Mustafa ELGÜN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6015, "Ad Soyad": "Mustafa Yağız MEMİŞ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6007, "Ad Soyad": "Nedim Hakan ARKAN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5199, "Ad Soyad": "Oğuz ÇİFTCİ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6054, "Ad Soyad": "Rifat TERCAN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrikli Ev Aletleri Teknik Servisi"}, {"Ögrenci No": 6034, "Ad Soyad": "Sedat CANGÖZEN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6025, "Ad Soyad": "Ömer GÜLMEZ", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Aşçılık"}, {"Ögrenci No": 6031, "Ad Soyad": "İbrahim PULÇA", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Aşçılık"}, {"Ögrenci No": 6017, "Ad Soyad": "İbrahim ŞEN", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 6061, "Ad Soyad": "İhsan GÜNGÖR", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Metal Doğrama"}, {"Ögrenci No": 6020, "Ad Soyad": "İsmail ÖĞÜNÇBEY", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Elektrikli Ev Aletleri Teknik Servisi"}, {"Ögrenci No": 6012, "Ad Soyad": "Şahin YEŞİL", "Sınıf No": 9, "Şube Adı": "9/A", "Eğitim Programı Dal Adı": "Fırıncılık"}, {"Ögrenci No": 6053, "Ad Soyad": "Adem ULUSAL", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6036, "Ad Soyad": "Azranur ATAŞ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5068, "Ad Soyad": "Begüm BALDIR", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5108, "Ad Soyad": "Berfin DURMUŞ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 6052, "Ad Soyad": "Birhat KAYA", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6049, "Ad Soyad": "Boran CANORAL", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Fotoğraf"}, {"Ögrenci No": 6063, "Ad Soyad": "Canan ÖZ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 6044, "Ad Soyad": "Cemal KEMİKLİ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Satış Elemanlığı"}, {"Ögrenci No": 6021, "Ad Soyad": "Defne Perihan ERDAL", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5198, "Ad Soyad": "Erol ÖZEN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Cephe Sistemleri Ve Pvc Doğrama"}, {"Ögrenci No": 6041, "Ad Soyad": "Eymen Efe DURMAZ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6030, "Ad Soyad": "Eymen SERTKAYA", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6022, "Ad Soyad": "Furkan ERGÜN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6011, "Ad Soyad": "Havva ŞİMŞEK", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Cilt Bakımı Ve Makyaj"}, {"Ögrenci No": 6062, "Ad Soyad": "Hilmi DEMİR", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6029, "Ad Soyad": "Mehmet TAMGÜLER", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6039, "Ad Soyad": "Melis GÜLLÜ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 6010, "Ad Soyad": "Mesut ÖZCAN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Fotoğraf"}, {"Ögrenci No": 6059, "Ad Soyad": "Musa BAZ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Satış Elemanlığı"}, {"Ögrenci No": 6068, "Ad Soyad": "Sude DEREN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 6057, "Ad Soyad": "Tayfun Yiğit SAVAŞ", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Baskı Sonrası"}, {"Ögrenci No": 6050, "Ad Soyad": "Yağız YAĞCI", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6040, "Ad Soyad": "Çiler KUBLAY", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 6042, "Ad Soyad": "İbrahim GÖÇMEN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 6051, "Ad Soyad": "Şafak ÖZEN", "Sınıf No": 9, "Şube Adı": "9/B", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5183, "Ad Soyad": "Abdulcebbar BARIŞ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 6009, "Ad Soyad": "Ali Neşet GÖKÇELİK", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Isıtma Ve Sıhhi Tesisat Sistemleri"}, {"Ögrenci No": 6016, "Ad Soyad": "Alperen ŞİMŞEK", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 6066, "Ad Soyad": "Ceyhun Hakan BAZ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Boya"}, {"Ögrenci No": 6038, "Ad Soyad": "Dede Osman KÜÇÜKTAŞ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Gövde"}, {"Ögrenci No": 5202, "Ad Soyad": "Dıljiyan DANIŞ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Gövde"}, {"Ögrenci No": 6045, "Ad Soyad": "Hamdullah ÖNÜN", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 6013, "Ad Soyad": "Kerim GEZİCİ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 6033, "Ad Soyad": "Mehmet Efe ELGÜNLÜ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 6028, "Ad Soyad": "Mert ARKAN", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 5026, "Ad Soyad": "Muhammed Hayati NEŞELİ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Isıtma Ve Sıhhi Tesisat Sistemleri"}, {"Ögrenci No": 6035, "Ad Soyad": "Muhammet Emin ÖZER", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 6047, "Ad Soyad": "Osman Polat DEMİR", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 6037, "Ad Soyad": "Rüzgar YUMUK", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Isıtma Ve Sıhhi Tesisat Sistemleri"}, {"Ögrenci No": 6027, "Ad Soyad": "Serhat ERTUĞRUL", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Gövde"}, {"Ögrenci No": 6005, "Ad Soyad": "Tahir GÖKÇELİK", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 5203, "Ad Soyad": "Yiğit ERBAY", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 6008, "Ad Soyad": "Yiğit ÖNGÖREN", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 5201, "Ad Soyad": "Yusuf BAŞARAN", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 6046, "Ad Soyad": "Ömer Ege ŞEN", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 5041, "Ad Soyad": "Übeyit KÜÇÜKTAŞ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 6006, "Ad Soyad": "İlhan ÜNLÜ", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Mekanikerliği"}, {"Ögrenci No": 5171, "Ad Soyad": "İsmail Kaan KÖKER", "Sınıf No": 9, "Şube Adı": "9/C", "Eğitim Programı Dal Adı": "Otomotiv Elektrikçiliği"}, {"Ögrenci No": 5050, "Ad Soyad": "Ayşe ADIYAMAN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5143, "Ad Soyad": "Ayşe Dudu TÜRKMEN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 1221, "Ad Soyad": "Beritan ARSLAN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5112, "Ad Soyad": "Can Bartu MADRAN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5160, "Ad Soyad": "Deniz KOÇ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Metal Doğrama"}, {"Ögrenci No": 5165, "Ad Soyad": "Ecrin SÖYLEMEZ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5054, "Ad Soyad": "Elif DAĞ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5177, "Ad Soyad": "Emir HOŞER", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5077, "Ad Soyad": "Eyyüp HOŞER", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5029, "Ad Soyad": "Eyüp DEMİR", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5205, "Ad Soyad": "Gülşah TAŞLI", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5122, "Ad Soyad": "Halil Efe YÜREGİL", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5065, "Ad Soyad": "Kübra KARAKOBAK", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5003, "Ad Soyad": "Mahir ERKUN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5164, "Ad Soyad": "Mahmut ÇELEPKOLU", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 4054, "Ad Soyad": "Mehmet Hanifi TUR", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5022, "Ad Soyad": "Muhammed Ali ELÇİ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5037, "Ad Soyad": "Narin DINAR", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5053, "Ad Soyad": "Nevzat GEZGÜÇ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5144, "Ad Soyad": "Nur Sena ÖNAT", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5184, "Ad Soyad": "Rojda MERT", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5061, "Ad Soyad": "Saynur ÜNAL", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5060, "Ad Soyad": "Sebahaddin TİRİT", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5196, "Ad Soyad": "Sevimsu KAVLAK", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5170, "Ad Soyad": "Volkan ÇAVAŞ", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5124, "Ad Soyad": "Yakup BAKIR", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Çelik Konstrüksiyon"}, {"Ögrenci No": 5132, "Ad Soyad": "Yağmur ERGİN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5147, "Ad Soyad": "Yağmur KOZAN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5004, "Ad Soyad": "Yağmur SARIBOĞA", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5082, "Ad Soyad": "Yaşar GELENDOSTLU", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Metal Doğrama"}, {"Ögrenci No": 5116, "Ad Soyad": "İrem EROĞLU", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Kadın Kuaförlüğü"}, {"Ögrenci No": 5180, "Ad Soyad": "İrfan KARAMAN", "Sınıf No": 10, "Şube Adı": "10/A", "Eğitim Programı Dal Adı": "Erkek Kuaförlüğü"}, {"Ögrenci No": 5151, "Ad Soyad": "Adem ARSLAN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5186, "Ad Soyad": "Ahmet Deniz KAYA", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5072, "Ad Soyad": "Ahmet Efe YILMAZ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Görüntü Ve Ses Sistemleri"}, {"Ögrenci No": 5191, "Ad Soyad": "Ahmet MADAN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Büyükbaş Hayvan Yetiştiriciliği"}, {"Ögrenci No": 5195, "Ad Soyad": "Ali Deniz GÜLOĞLU", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5069, "Ad Soyad": "Alperen AY", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Görüntü Ve Ses Sistemleri"}, {"Ögrenci No": 5169, "Ad Soyad": "Altay İŞKAL", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5064, "Ad Soyad": "Atakan Adil GÜLLÜ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 4102, "Ad Soyad": "Barış ERTAŞ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrikli Ev Aletleri Teknik Servisi"}, {"Ögrenci No": 5070, "Ad Soyad": "Berat DINAR", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5081, "Ad Soyad": "Caner AVCU", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5148, "Ad Soyad": "Ekrem UĞUZ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrikli Ev Aletleri Teknik Servisi"}, {"Ögrenci No": 5103, "Ad Soyad": "Emine KARABIYIKOĞLU", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Fotoğraf"}, {"Ögrenci No": 5087, "Ad Soyad": "Enes DERE", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5106, "Ad Soyad": "Hira Nur GÖKBEL", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Fotoğraf"}, {"Ögrenci No": 5038, "Ad Soyad": "Hüseyin ULUDOĞAN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5047, "Ad Soyad": "Mehmet ERDOĞAN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5027, "Ad Soyad": "Muhammet Ali KURT", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5111, "Ad Soyad": "Muhammet Enes ETE", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5032, "Ad Soyad": "Mustafa CESUR", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5138, "Ad Soyad": "Rezan DANIŞ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5168, "Ad Soyad": "Samet TAŞ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5052, "Ad Soyad": "Semra DEREN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Büyükbaş Hayvan Yetiştiriciliği"}, {"Ögrenci No": 5035, "Ad Soyad": "Serhat ORAL", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Haberleşme Sistemleri"}, {"Ögrenci No": 5105, "Ad Soyad": "Sofya ACAR", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Fotoğraf"}, {"Ögrenci No": 5174, "Ad Soyad": "Tunay TİRİT", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5001, "Ad Soyad": "Yağız GÜLLÜ", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5079, "Ad Soyad": "Yusuf KOCA", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5028, "Ad Soyad": "Yusuf ÖNÜN", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5059, "Ad Soyad": "İbrahim ERDEM", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5181, "Ad Soyad": "Şerzan KURT", "Sınıf No": 10, "Şube Adı": "10/B", "Eğitim Programı Dal Adı": "Elektrik Tesisatları Ve Pano Montörlüğü"}, {"Ögrenci No": 5089, "Ad Soyad": "Ayşegül BAŞKURT Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 6079, "Ad Soyad": "Cavit YILMAZ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5145, "Ad Soyad": "Coşkun Efe YABURGA Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5008, "Ad Soyad": "Davut DEMİR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5115, "Ad Soyad": "Durmuş Can ERDAL Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5155, "Ad Soyad": "Ekrem KURT Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 2009, "Ad Soyad": "Emine ÇETİN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 6018, "Ad Soyad": "Enes KELEŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5127, "Ad Soyad": "Figen YUMUK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5051, "Ad Soyad": "Gizem ŞAHİN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5099, "Ad Soyad": "Kadir ÇETİN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5121, "Ad Soyad": "Kadriye KURU Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5075, "Ad Soyad": "Mehmet KACAR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5162, "Ad Soyad": "Melik Menderes HANCI Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5135, "Ad Soyad": "Muhammed Ali YILDIZ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5128, "Ad Soyad": "Muhammed Emir GÖKBEL Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5005, "Ad Soyad": "Muhammet KORKMAZ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5095, "Ad Soyad": "Musa ARICI Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5098, "Ad Soyad": "Mustafa ESER Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5189, "Ad Soyad": "Mustafa ÇELİK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 6077, "Ad Soyad": "Nihal DEMİR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5025, "Ad Soyad": "Osman Efe AKKAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5176, "Ad Soyad": "Rabia TAY Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4085, "Ad Soyad": "Ramazan KAYA Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4074, "Ad Soyad": "Selahattin ACUN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5045, "Ad Soyad": "Semih ARSLANGİRAY Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5178, "Ad Soyad": "Semih ORAL Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 6074, "Ad Soyad": "Sevda YOK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5159, "Ad Soyad": "Siyamend TURHAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5021, "Ad Soyad": "Veysel YETİM Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5173, "Ad Soyad": "Yaşar Mert DÜNDAR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5049, "Ad Soyad": "Yusuf ÖDEYEN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5074, "Ad Soyad": "İbrahim KEPENEK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5110, "Ad Soyad": "İsmetcan ERASLAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4120, "Ad Soyad": "İzzettin TAŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5107, "Ad Soyad": "Şenol ÜŞÜNTÜ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5097, "Ad Soyad": "Şerzan TANRİVERDİ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/C", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5080, "Ad Soyad": "Adem SOLMAZ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5204, "Ad Soyad": "Arda GÖKÇENOĞLU Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5088, "Ad Soyad": "Ayaz Efe ÇELİK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5157, "Ad Soyad": "Baran TURAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5158, "Ad Soyad": "Bayram KİRİK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5058, "Ad Soyad": "Berkay AĞDAĞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5030, "Ad Soyad": "Can GÜLAYDIN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5036, "Ad Soyad": "Cihan KAHYA Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5094, "Ad Soyad": "Doğaç Efe EDDEM Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 1824, "Ad Soyad": "Dündar ÖZVEREN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5043, "Ad Soyad": "Efe ÖZTÜRK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5153, "Ad Soyad": "Egemen GÖK Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5031, "Ad Soyad": "Harun ACAR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5071, "Ad Soyad": "Harun Kemal KALBURCU Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5163, "Ad Soyad": "Hüseyin Can GÜLDEN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4082, "Ad Soyad": "Kaan DEMİR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5194, "Ad Soyad": "Kadir Samet BAKIR Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5034, "Ad Soyad": "Koray MEMİŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5100, "Ad Soyad": "Mehmet Refik BARLAS Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5093, "Ad Soyad": "Mehmet Zeki GÜNDAY Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5063, "Ad Soyad": "Muhammet TURAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4025, "Ad Soyad": "Mustafa ARKUN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5056, "Ad Soyad": "Nuri Efe ÇİVİ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5078, "Ad Soyad": "Resul ELÇİ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5062, "Ad Soyad": "Resul Ekrem ERTAŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5146, "Ad Soyad": "Reşat KARABULUT Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 4041, "Ad Soyad": "Sabri Ozan KINACI Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5091, "Ad Soyad": "Samet ÖNER Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5123, "Ad Soyad": "Serdar TAŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5141, "Ad Soyad": "Taha AKKAN Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5040, "Ad Soyad": "Umut AKGÖL Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5024, "Ad Soyad": "Yaşar KUŞ Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5203, "Ad Soyad": "Yiğit ERBAY Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5193, "Ad Soyad": "Özal DEMİREL Mesleki Eğitim + Diploma", "Sınıf No": 10, "Şube Adı": "10/D", "Eğitim Programı Dal Adı": "10"}, {"Ögrenci No": 5033, "Ad Soyad": "Ahmet DÜLDÜL Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4061, "Ad Soyad": "Ahmet ÇAKIN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4004, "Ad Soyad": "Ahmet ÜNALDI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1859, "Ad Soyad": "Alpay DOĞAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4099, "Ad Soyad": "Arif MADRAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4084, "Ad Soyad": "Bahoz DANIŞ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4052, "Ad Soyad": "Bilal BAŞARAL Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5023, "Ad Soyad": "Burak KAYMAZ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4109, "Ad Soyad": "Cesur TUNCER Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4113, "Ad Soyad": "Emirhan COŞKUN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1876, "Ad Soyad": "Faik Burak TEKİNER Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4037, "Ad Soyad": "Fehmi Can ÖZCAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1798, "Ad Soyad": "Furkan AKKAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4121, "Ad Soyad": "Furkan AYDIN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4039, "Ad Soyad": "Hüseyin İNAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4038, "Ad Soyad": "Kaan TUNÇ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 507, "Ad Soyad": "Kıymet USUL Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4005, "Ad Soyad": "Mehmet GÖKOĞLU Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4015, "Ad Soyad": "Mert Can KULALI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4058, "Ad Soyad": "Muammer GÜRBÜZ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4103, "Ad Soyad": "Muhammed MAYDA Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4071, "Ad Soyad": "Orçun Ahmet YELKENCİ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5101, "Ad Soyad": "Ozan GEBEŞÇE Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4009, "Ad Soyad": "Süleyman AKGÜN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4035, "Ad Soyad": "Umut Zeybek KOÇAK Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4115, "Ad Soyad": "Yaşar TAY Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4097, "Ad Soyad": "Yoldaş AĞRAŞ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4080, "Ad Soyad": "Zeki ŞİRİN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5175, "Ad Soyad": "İslam DEMİRTAŞ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/A", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5154, "Ad Soyad": "Ahmet YAĞCI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1800, "Ad Soyad": "Arda SAĞ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5019, "Ad Soyad": "Asmin ACAR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4017, "Ad Soyad": "Ayten Naz ÇÖNE Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4013, "Ad Soyad": "Ayşenur BİZDEN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5104, "Ad Soyad": "Berkay KOYUNCU Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4027, "Ad Soyad": "Burak AKSAKAL Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4024, "Ad Soyad": "Burak KAYA Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4042, "Ad Soyad": "Damla NAMUSLU Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4019, "Ad Soyad": "Edanur ÇELİK Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4104, "Ad Soyad": "Efe TURAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5185, "Ad Soyad": "Elif GEBEŞÇE Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4122, "Ad Soyad": "Elif SARIN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4014, "Ad Soyad": "Fatih KUMSAL Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4096, "Ad Soyad": "Fatma ATAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5137, "Ad Soyad": "Fuat ÖZCAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4123, "Ad Soyad": "Gülfidan YILDIRIM Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4081, "Ad Soyad": "Gülseda AVCI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4020, "Ad Soyad": "Hazal KAYA Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5018, "Ad Soyad": "Kezban NABAT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4023, "Ad Soyad": "Mehmet YETİM Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4067, "Ad Soyad": "Meryem ÖZEN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5131, "Ad Soyad": "Mizgin TURHAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4026, "Ad Soyad": "Mustafa EKİCİ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4064, "Ad Soyad": "Ramazan BAYRAKTAR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4116, "Ad Soyad": "Sakine KURT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5012, "Ad Soyad": "Tuğba ÇATALLIK Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4045, "Ad Soyad": "Umut Deniz MERT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5200, "Ad Soyad": "Yağmur ALAV Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4044, "Ad Soyad": "Yusuf GENÇER Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1908, "Ad Soyad": "Zeynep SARIN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4022, "Ad Soyad": "Zilan ÇAKMAK Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4070, "Ad Soyad": "Çağan TELLİ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4101, "Ad Soyad": "Ömer ETE Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1820, "Ad Soyad": "Şeyma Nur YILDIZ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/B", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4110, "Ad Soyad": "Alperen GÜLLÜ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4060, "Ad Soyad": "Baran ARAS Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4030, "Ad Soyad": "Barlas GÜNDÜZCÜ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4011, "Ad Soyad": "Barış ULUS Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1900, "Ad Soyad": "Cavit AVCU Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4048, "Ad Soyad": "Cebrail ACAR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4040, "Ad Soyad": "Emrullah Can GÜNGÖR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4057, "Ad Soyad": "Enes TAŞKIN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4012, "Ad Soyad": "Erdem EKSEN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4105, "Ad Soyad": "Eren Baki BASTI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1882, "Ad Soyad": "Güray ÖZEREN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4031, "Ad Soyad": "Hasan Mert TURAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4086, "Ad Soyad": "Hüseyin Efe TERELİ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4089, "Ad Soyad": "Kerem SABANCI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4062, "Ad Soyad": "Mert ERŞEN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5020, "Ad Soyad": "Muhiddin Anıl AZMAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5161, "Ad Soyad": "Mustafa AL ALI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5120, "Ad Soyad": "Mustafa BAŞKURT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1892, "Ad Soyad": "Mustafa Can KAYA Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1870, "Ad Soyad": "Mustafa KÖSE Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4055, "Ad Soyad": "Mustafa ÖZ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4065, "Ad Soyad": "Oruç Paşa VAR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 5017, "Ad Soyad": "Osman ÖNÜN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1841, "Ad Soyad": "Resul HALMAN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4033, "Ad Soyad": "Serkan AKINCI Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1866, "Ad Soyad": "Seyhan CÖMERT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1834, "Ad Soyad": "Sinan Can GÜLTEKİN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4068, "Ad Soyad": "Tacettin Berk TÜRKMEN Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1838, "Ad Soyad": "Taner DURMUŞ Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4056, "Ad Soyad": "Yunus Emre BULUT Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 4108, "Ad Soyad": "Ömer DEMİR Mesleki Eğitim + Diploma", "Sınıf No": 11, "Şube Adı": "11/C", "Eğitim Programı Dal Adı": "11"}, {"Ögrenci No": 1822, "Ad Soyad": "Adnan UZUN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1827, "Ad Soyad": "Ali KALKANCI Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1811, "Ad Soyad": "Dürdane KUŞ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1697, "Ad Soyad": "Efe Can TUNCER Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1848, "Ad Soyad": "Hatice KOÇ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 5136, "Ad Soyad": "Hediyenur MESUT Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1828, "Ad Soyad": "Mehmet GÜLDEN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 4063, "Ad Soyad": "Mehmet Talha KÖRPE Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1887, "Ad Soyad": "Mesut YAŞAR Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1889, "Ad Soyad": "Muhammet Enes BASTI Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1824, "Ad Soyad": "Muhammet İbrahim DURU Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1858, "Ad Soyad": "Mustafa TEKİN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 4197, "Ad Soyad": "Mustafa TIĞRAK Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1857, "Ad Soyad": "Naciye TİRİT Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1651, "Ad Soyad": "Nazmi ÇETİN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1825, "Ad Soyad": "Osman DAĞ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1861, "Ad Soyad": "Polat İRGİ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1886, "Ad Soyad": "Raina Eylül GELDİ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1826, "Ad Soyad": "Soner SÖNMEZ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 5149, "Ad Soyad": "Tuana ATAR Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1872, "Ad Soyad": "Velat ÖNÜN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1698, "Ad Soyad": "Yusuf SEVİNÇ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1901, "Ad Soyad": "İlker KAŞTAN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1805, "Ad Soyad": "İrem YAĞIZ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/A", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1810, "Ad Soyad": "Abdullah DEMİR Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 4066, "Ad Soyad": "Batuhan ÇİVİ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1865, "Ad Soyad": "Berat TURAN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 4034, "Ad Soyad": "Beritan GÜNEN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1669, "Ad Soyad": "Berke ÇETİN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1843, "Ad Soyad": "Cafercan DANACI Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1772, "Ad Soyad": "Efe ZEYBEK Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1816, "Ad Soyad": "Furkan ÇOBAN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1835, "Ad Soyad": "Fırat Caner TULUM Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1817, "Ad Soyad": "Halil İbrahim İLBASAN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1796, "Ad Soyad": "Hamza TURHAN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1864, "Ad Soyad": "Hasan Basri ŞAŞTI Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1832, "Ad Soyad": "Kadir ÇELİK Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1837, "Ad Soyad": "Oğuzhan ERSOY Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1860, "Ad Soyad": "Tolga ALTAY Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1793, "Ad Soyad": "Umut Mert ÇETİN Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1842, "Ad Soyad": "Yiğit BAŞ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1905, "Ad Soyad": "Yusuf DURU Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1818, "Ad Soyad": "Öner Adil TURUNÇ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1844, "Ad Soyad": "Ümit PARLA Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1766, "Ad Soyad": "İbrahim ELALMIŞ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1907, "Ad Soyad": "İsmail DÖNMEZ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1878, "Ad Soyad": "İsmail GÖZELER Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1801, "Ad Soyad": "Şahin GÜLMEZ Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}, {"Ögrenci No": 1833, "Ad Soyad": "Şerefcan AVCI Mesleki Eğitim + Diploma", "Sınıf No": 12, "Şube Adı": "12/B", "Eğitim Programı Dal Adı": "12"}];
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqJwfbe70QZjbXmORUiQ1zw28p6-oIiM48mp9AJRIJU-xuwQDfZZt5LwdLSpr1KiIrgQ/exec";
+
+const branchOrder = ["9/A", "9/B", "9/C", "10/A", "10/B", "10/C", "10/D", "11/A", "11/B", "11/C", "12/A", "12/B"];
+let branches = {};
+
+studentsData.forEach(s => {
+    let b = s['Şube Adı'];
+    if (!b) return;
+    if (!branches[b]) branches[b] = [];
+    branches[b].push(s);
+});
+
+let attendanceState = {};
+
+function init() {
+    const tSelect = document.getElementById('teacherSelect');
+    teachersData.forEach(t => {
+        let opt = document.createElement('option');
+        opt.value = t;
+        opt.text = t;
+        tSelect.appendChild(opt);
+    });
+
+    const bSelect = document.getElementById('branchSelect');
+    branchOrder.forEach(b => {
+        if (branches[b]) {
+            let opt = document.createElement('option');
+            opt.value = b;
+            opt.text = `Şube: ${b} (${branches[b].length} Öğrenci)`;
+            bSelect.appendChild(opt);
+        }
+    });
+}
+
+function loadStudents() {
+    const branch = document.getElementById('branchSelect').value;
+    const card = document.getElementById('studentCard');
+    const listDiv = document.getElementById('studentList');
+    
+    if (!branch) {
+        card.style.display = 'none';
+        return;
+    }
+
+    card.style.display = 'block';
+    listDiv.innerHTML = '';
+    
+    let students = branches[branch];
+    
+    if (!attendanceState[branch]) {
+        attendanceState[branch] = {};
+        students.forEach(s => {
+            attendanceState[branch][s['Ögrenci No']] = 'GELDI';
+        });
+    }
+
+    updateSummary(branch);
+
+    students.forEach(s => {
+        let no = s['Ögrenci No'];
+        let status = attendanceState[branch][no];
+
+        let div = document.createElement('div');
+        div.className = 'student-item';
+        div.innerHTML = `
+            <div class="student-info">
+                <strong>${s['Ad Soyad']}</strong>
+                <span>No: ${no} | ${s['Eğitim Programı Dal Adı']}</span>
+            </div>
+            <div class="status-buttons">
+                <button class="status-btn geldi ${status === 'GELDI' ? 'active' : ''}" onclick="setStatus('${branch}', ${no}, 'GELDI')">Geldi</button>
+                <button class="status-btn gelmedi ${status === 'GELMEDI' ? 'active' : ''}" onclick="setStatus('${branch}', ${no}, 'GELMEDI')">Gelmedi</button>
+            </div>
+        `;
+        listDiv.appendChild(div);
+    });
+}
+
+function setStatus(branch, no, status) {
+    attendanceState[branch][no] = status;
+    loadStudents();
+}
+
+function updateSummary(branch) {
+    let students = branches[branch];
+    let gelmeyen = 0;
+    students.forEach(s => {
+        if (attendanceState[branch][s['Ögrenci No']] === 'GELMEDI') gelmeyen++;
+    });
+    document.getElementById('summaryBox').innerHTML = `<strong>Şube:</strong> ${branch} | <strong>Toplam:</strong> ${students.length} Öğrenci | <span style="color:var(--danger)"><strong>Gelmeyen:</strong> ${gelmeyen}</span>`;
+}
+
+function sendAttendanceToCloud() {
+    const teacher = document.getElementById('teacherSelect').value;
+    const branch = document.getElementById('branchSelect').value;
+    const lesson = document.getElementById('lessonInfo').value;
+
+    if (!teacher) {
+        alert("Lütfen listeden adınızı seçiniz!");
+        return;
+    }
+    if (!branch) {
+        alert("Lütfen şube seçiniz!");
+        return;
+    }
+
+    let payload = [];
+    branches[branch].forEach(s => {
+        let no = s['Ögrenci No'];
+        let status = attendanceState[branch][no];
+        payload.push({
+            ogretmen: teacher,
+            sube: branch,
+            ogrenciNo: no,
+            adSoyad: s['Ad Soyad'],
+            dersBilgisi: lesson,
+            durum: status
+        });
+    });
+
+    const btn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loadingMsg');
+    
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        loading.style.display = 'none';
+        btn.disabled = false;
+        alert("Başarılı! Yoklama verileri öğretmen adı ile birlikte okulun Google E-Tablosuna kaydedildi.");
+    })
+    .catch(error => {
+        loading.style.display = 'none';
+        btn.disabled = false;
+        alert("Bağlantı hatası: " + error);
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
